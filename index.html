@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FireTrack — High Fidelity Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1D3A;
+    --navy-2:#122A52;
+    --ink:#101826;
+    --paper:#F5F6F8;
+    --card:#FFFFFF;
+    --ember:#FF6A33;
+    --ember-dark:#E14E17;
+    --gold:#F5A623;
+    --ok:#1E8E5A;
+    --line:#E4E7EC;
+    --muted:#6B7686;
+    --white:#FFFFFF;
+    --shadow: 0 10px 30px rgba(11,29,58,0.12);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #16305c 0%, transparent 60%),
+      radial-gradient(1000px 500px at 90% 110%, #1a3868 0%, transparent 55%),
+      var(--navy);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:40px 20px;
+    color:var(--ink);
+  }
+  .stage{
+    display:flex;
+    gap:40px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    justify-content:center;
+    max-width:1100px;
+  }
+  .intro{
+    color:#DCE4F2;
+    max-width:300px;
+    padding-top:18px;
+  }
+  .intro .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--ember);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .intro h1{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:38px;
+    line-height:1.02;
+    margin:0 0 14px;
+    letter-spacing:.01em;
+    text-transform:uppercase;
+  }
+  .intro h1 span{color:var(--ember);}
+  .intro p{
+    font-size:14.5px;
+    line-height:1.6;
+    color:#B7C2D9;
+    margin:0 0 18px;
+  }
+  .intro .tags{display:flex; flex-wrap:wrap; gap:8px;}
+  .intro .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:#9FB0CC;
+    border:1px solid rgba(255,255,255,0.16);
+    padding:5px 10px;
+    border-radius:100px;
+  }
+  .role-switch{display:flex; gap:8px; margin-top:22px; margin-bottom:6px;}
+  .role-btn{
+    flex:1; padding:11px 10px; border-radius:12px; cursor:pointer;
+    border:1px solid rgba(255,255,255,0.16);
+    background:rgba(255,255,255,0.04);
+    color:#B7C2D9; font-family:'JetBrains Mono',monospace;
+    font-size:11px; font-weight:700; text-align:center; letter-spacing:.02em;
+    transition:all .15s ease;
+  }
+  .role-btn.on{
+    background:linear-gradient(135deg, var(--ember), var(--ember-dark));
+    color:#fff; border-color:transparent;
+    box-shadow:0 8px 18px rgba(255,106,51,0.3);
+  }
+
+  /* PHONE FRAME */
+  .phone{
+    width:376px;
+    height:790px;
+    background:var(--ink);
+    border-radius:46px;
+    padding:12px;
+    box-shadow:var(--shadow), 0 0 0 1px rgba(255,255,255,0.06);
+    position:relative;
+    flex-shrink:0;
+  }
+  .notch{
+    position:absolute;
+    top:12px; left:50%;
+    transform:translateX(-50%);
+    width:120px; height:26px;
+    background:var(--ink);
+    border-radius:0 0 16px 16px;
+    z-index:20;
+  }
+  .screen-wrap{
+    width:100%; height:100%;
+    background:var(--paper);
+    border-radius:36px;
+    overflow:hidden;
+    position:relative;
+  }
+  /* Screen is now a flex column: scrollarea grows, bottomnav (if present) is pinned as a normal flow item */
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none;
+    transform:translateX(14px);
+    transition:opacity .28s ease, transform .28s ease;
+    overflow:hidden;
+  }
+  .screen.active{opacity:1; pointer-events:auto; transform:translateX(0);}
+  .scrollarea{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    -webkit-overflow-scrolling:touch;
+  }
+  .statusbar{
+    height:34px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 22px 0 26px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; color:var(--ink); font-weight:600;
+    background:transparent;
+  }
+
+  /* HEADER used across app screens */
+  .app-header{
+    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+    color:#fff;
+    padding:6px 20px 20px;
+    flex-shrink:0;
+    position:relative;
+    overflow:hidden;
+  }
+  .app-header::after{
+    content:"";
+    position:absolute; right:-30px; top:-30px;
+    width:140px; height:140px;
+    background:radial-gradient(circle, rgba(255,106,51,0.28), transparent 70%);
+  }
+  .brand-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .brand{display:flex; align-items:center; gap:8px;}
+  .brand-mark{
+    width:26px; height:26px; border-radius:8px;
+    background:linear-gradient(135deg, var(--ember), var(--ember-dark));
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px;
+  }
+  .brand-name{
+    font-family:'Oswald',sans-serif; font-weight:600; font-size:15px;
+    letter-spacing:.04em; text-transform:uppercase;
+  }
+  .bell{
+    width:32px; height:32px; border-radius:10px;
+    background:rgba(255,255,255,0.1);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; position:relative; cursor:pointer;
+  }
+  .bell .dot{
+    position:absolute; top:6px; right:6px;
+    width:7px; height:7px; border-radius:50%;
+    background:var(--ember); border:1.5px solid var(--navy);
+  }
+  .hi{font-size:12px; color:#9FB0CC; font-family:'JetBrains Mono',monospace;}
+  .hi b{color:#fff; font-family:'Inter',sans-serif; font-weight:700; display:block; font-size:19px; margin-top:2px;}
+
+  .content{padding:18px 20px 24px; flex:1;}
+  h2.section-title{
+    font-family:'Oswald',sans-serif;
+    font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--muted); margin:0 0 12px; font-weight:600;
+  }
+
+  /* PROGRESS TRACKER — signature element */
+  .tracker{
+    background:var(--card);
+    border-radius:18px;
+    padding:18px 16px 16px;
+    box-shadow:0 2px 10px rgba(16,24,38,0.05);
+    border:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  .tracker-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px;}
+  .tracker-head .label{font-family:'Oswald',sans-serif; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+  .tracker-head .pct{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ember-dark); font-weight:700;}
+  .gauge{display:flex; align-items:flex-end; gap:6px; height:64px;}
+  .gauge .seg{flex:1; display:flex; flex-direction:column; align-items:center; gap:8px;}
+  .gauge .bar{width:100%; border-radius:6px 6px 3px 3px; background:var(--line); height:38px; position:relative; overflow:hidden; transition:background .3s ease;}
+  .gauge .seg.done .bar{background:linear-gradient(180deg, #2CA86B, var(--ok));}
+  .gauge .seg.current .bar{background:linear-gradient(180deg, var(--ember), var(--ember-dark)); box-shadow:0 0 0 3px rgba(255,106,51,0.15);}
+  .gauge .seg.todo .bar{height:20px; align-self:flex-end;}
+  .gauge .seg .stepname{font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--muted); text-align:center; line-height:1.2; transition:color .3s ease;}
+  .gauge .seg.current .stepname{color:var(--ember-dark); font-weight:700;}
+  .gauge .seg.done .stepname{color:var(--ok); font-weight:700;}
+
+  .next-card{
+    margin-top:14px;
+    background:linear-gradient(135deg, #FFF3EC, #FFE4D4);
+    border:1px solid #FFD3B8;
+    border-radius:14px;
+    padding:13px 14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .next-card .ic{font-size:20px;}
+  .next-card .txt{font-size:12.5px; line-height:1.35;}
+  .next-card .txt b{display:block; font-size:13.5px; margin-bottom:1px;}
+
+  /* CARD LIST */
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px 15px;
+    margin-bottom:10px;
+    display:flex; align-items:center; gap:12px;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, opacity .3s ease;
+  }
+  .card:active{transform:scale(.98);}
+  .card:hover{box-shadow:0 4px 14px rgba(16,24,38,0.08);}
+  .icon-box{
+    width:40px; height:40px; border-radius:11px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; flex-shrink:0; transition:background .3s ease, color .3s ease;
+  }
+  .icon-box.green{background:#E4F5EC; color:var(--ok);}
+  .icon-box.orange{background:#FFEBE0; color:var(--ember-dark);}
+  .icon-box.grey{background:#EEF0F3; color:var(--muted);}
+  .card .body{flex:1; min-width:0;}
+  .card .body .t1{font-weight:700; font-size:14px; margin-bottom:2px;}
+  .card .body .t2{font-size:12px; color:var(--muted);}
+  .badge{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; font-weight:700; padding:4px 8px; border-radius:100px;
+    text-transform:uppercase; letter-spacing:.03em; flex-shrink:0; transition:all .3s ease;
+  }
+  .badge.pass{background:#E4F5EC; color:var(--ok);}
+  .badge.pending{background:#FFF3E0; color:#B9791A;}
+  .badge.missing{background:#FDE8E6; color:#C0392B;}
+  .badge.locked{background:#EEF0F3; color:var(--muted);}
+  .chev{color:#C4CAD4; font-size:16px;}
+
+  /* BOTTOM NAV — now a normal flex child, always visible, never scrolls away */
+  .bottomnav{
+    flex-shrink:0;
+    height:64px;
+    background:rgba(255,255,255,0.96);
+    backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-around;
+  }
+  .navbtn{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-size:9.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;
+    cursor:pointer; font-weight:600; letter-spacing:.02em;
+    background:none; border:none; padding:6px 10px;
+  }
+  .navbtn .navic{font-size:17px;}
+  .navbtn.active{color:var(--ember-dark);}
+
+  /* LOGIN SCREEN */
+  .login-screen{
+    background:linear-gradient(160deg, var(--navy) 0%, #0d2347 55%, #142c56 100%);
+    color:#fff; height:100%; display:flex; flex-direction:column;
+    padding:0 26px 30px; position:relative; overflow:hidden;
+  }
+  .login-screen::before{
+    content:"";
+    position:absolute; top:-60px; right:-60px; width:220px; height:220px;
+    background:radial-gradient(circle, rgba(255,106,51,0.35), transparent 70%);
+  }
+  .login-top{padding-top:70px; margin-bottom:36px;}
+  .login-mark{
+    width:56px; height:56px; border-radius:16px;
+    background:linear-gradient(135deg, var(--ember), var(--ember-dark));
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px; margin-bottom:18px;
+    box-shadow:0 10px 24px rgba(255,106,51,0.35);
+  }
+  .login-top h1{
+    font-family:'Oswald',sans-serif; font-size:30px; text-transform:uppercase;
+    margin:0 0 6px; letter-spacing:.02em; font-weight:700;
+  }
+  .login-top p{margin:0; color:#A9B7D1; font-size:13px; line-height:1.5;}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block; font-family:'JetBrains Mono',monospace; font-size:10.5px;
+    color:#8DA0C4; margin-bottom:6px; text-transform:uppercase; letter-spacing:.06em;
+  }
+  .field input{
+    width:100%; padding:13px 14px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.16);
+    background:rgba(255,255,255,0.06);
+    color:#fff; font-size:14px; font-family:'Inter',sans-serif;
+  }
+  .field input:focus{outline:2px solid var(--ember); outline-offset:1px;}
+  .field input::placeholder{color:#5E6E8C;}
+  .field .err{display:none; color:#FF8B6B; font-size:11px; margin-top:6px; font-family:'JetBrains Mono',monospace;}
+  .btn-primary{
+    width:100%; padding:14px; border-radius:12px; border:none;
+    background:linear-gradient(135deg, var(--ember), var(--ember-dark));
+    color:#fff; font-weight:700; font-size:14px; letter-spacing:.02em;
+    cursor:pointer; margin-top:6px;
+    box-shadow:0 10px 22px rgba(255,106,51,0.3);
+    font-family:'Inter',sans-serif;
+    transition:transform .12s ease;
+  }
+  .btn-primary:active{transform:scale(.98);}
+  .login-foot{margin-top:auto; text-align:center; font-size:12px; color:#7C8CAD; padding-top:20px;}
+  .login-foot a{color:var(--ember); text-decoration:none; font-weight:600;}
+  .applicant-id{
+    margin-top:20px; text-align:center; font-family:'JetBrains Mono',monospace;
+    font-size:10.5px; color:#5E6E8C; letter-spacing:.04em;
+  }
+
+  /* DETAIL SCREEN */
+  .detail-header{
+    background:linear-gradient(135deg, var(--navy), var(--navy-2));
+    color:#fff; padding:6px 20px 26px; flex-shrink:0; position:relative;
+  }
+  .backbtn{
+    width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,0.1);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; margin-bottom:16px; font-size:14px;
+  }
+  .score-ring{
+    width:120px; height:120px; border-radius:50%;
+    background:conic-gradient(var(--ember) 0% 87%, rgba(255,255,255,0.12) 87% 100%);
+    display:flex; align-items:center; justify-content:center; margin:6px auto 4px;
+    position:relative;
+  }
+  .score-ring::before{
+    content:""; position:absolute; inset:9px; border-radius:50%; background:var(--navy-2);
+  }
+  .score-ring .num{position:relative; font-family:'Oswald',sans-serif; font-size:32px; font-weight:700;}
+  .score-ring .num sub{font-size:13px; font-weight:400; color:#B7C2D9;}
+  .detail-header .caption{text-align:center; font-size:12px; color:#B7C2D9; font-family:'JetBrains Mono',monospace; margin-top:2px;}
+
+  .metric-row{display:flex; justify-content:space-between; padding:13px 2px; border-bottom:1px solid var(--line); font-size:13.5px;}
+  .metric-row:last-child{border-bottom:none;}
+  .metric-row .k{color:var(--muted);}
+  .metric-row .v{font-weight:700;}
+  .metric-row .v.ok{color:var(--ok);}
+
+  /* Leaderboard */
+  .lb-row{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--line);}
+  .lb-rank{
+    width:28px; height:28px; border-radius:8px; background:var(--paper); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace;
+    font-weight:700; font-size:12px; flex-shrink:0; color:var(--muted);
+  }
+  .lb-row.top1 .lb-rank{background:linear-gradient(135deg,#FFD873,#F5A623); color:#5B3A00; border:none;}
+  .lb-row.top2 .lb-rank{background:#E4E9F0; color:#3A4658; border:none;}
+  .lb-row.top3 .lb-rank{background:#F1D9C4; color:#6B3E1C; border:none;}
+  .lb-row .lb-id{font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; flex:1;}
+  .lb-row .lb-score{font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:700; color:var(--ink);}
+  .lb-row.me{background:#FFF3EC; margin:0 -8px; padding:12px 8px; border-radius:10px; border-bottom:none;}
+  .lb-note{
+    background:#EEF2FF; border:1px solid #DCE3FA; border-radius:12px; padding:12px 13px;
+    font-size:12px; color:#3B4B7A; line-height:1.5; margin-bottom:14px;
+  }
+
+  .doc-progress{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+  .doc-progress .track{flex:1; height:8px; background:var(--line); border-radius:100px; overflow:hidden;}
+  .doc-progress .fill{height:100%; width:66%; background:linear-gradient(90deg, var(--gold), var(--ember)); border-radius:100px; transition:width .4s ease;}
+  .doc-progress .txt{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); flex-shrink:0;}
+
+  /* HR components */
+  .stat-grid{display:flex; gap:10px; margin-bottom:16px;}
+  .stat-box{
+    flex:1; background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:12px 12px; text-align:left; transition:border-color .3s ease;
+  }
+  .stat-box .num{font-family:'Oswald',sans-serif; font-size:24px; font-weight:700; line-height:1; transition:color .3s ease;}
+  .stat-box .lbl{font-size:10.5px; color:var(--muted); margin-top:5px; line-height:1.3;}
+  .stat-box.alert .num{color:var(--ember-dark);}
+
+  .id-pill{
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:700;
+    background:#EEF2FF; color:#3B4B7A; padding:3px 9px; border-radius:100px; display:inline-block;
+  }
+  .anon-note{
+    background:#111A2E; color:#CFE0F5; border-radius:12px; padding:11px 13px;
+    font-size:11.5px; line-height:1.5; margin-bottom:14px; display:flex; gap:9px; align-items:flex-start;
+  }
+  .anon-note .ic{font-size:15px;}
+
+  .score-input-row{
+    display:flex; align-items:center; gap:10px; background:var(--paper); border:1px solid var(--line);
+    border-radius:12px; padding:10px 12px; margin-bottom:10px;
+  }
+  .score-input-row label{flex:1; font-size:12.5px; font-weight:600; color:var(--ink);}
+  .score-input-row input{
+    width:64px; text-align:center; padding:7px 4px; border-radius:8px; border:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px;
+  }
+  .empty-state{
+    text-align:center; padding:24px 10px; color:var(--muted); font-size:12.5px; line-height:1.6;
+  }
+  .empty-state .ic{font-size:26px; display:block; margin-bottom:8px;}
+
+  /* Audit log table */
+  .log-table{width:100%; border-collapse:collapse; font-size:11px;}
+  .log-table th{
+    text-align:left; font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.05em; padding:8px 6px; border-bottom:2px solid var(--line);
+  }
+  .log-table td{padding:9px 6px; border-bottom:1px solid var(--line); vertical-align:top;}
+  .log-table td.time{font-family:'JetBrains Mono',monospace; color:var(--muted); white-space:nowrap; font-size:10.5px;}
+  .log-table td.action{font-weight:600; font-size:11.5px;}
+  .log-table .locktag{
+    display:inline-flex; align-items:center; gap:4px; font-family:'JetBrains Mono',monospace;
+    font-size:9px; color:var(--ok); margin-top:2px;
+  }
+  .log-table tr.new-row{animation:flashrow 1.2s ease;}
+  @keyframes flashrow{0%{background:#FFF3EC;} 100%{background:transparent;}}
+
+  /* Fraud alerts */
+  .alert-card{
+    border-radius:14px; padding:13px 14px; margin-bottom:10px;
+    display:flex; gap:11px; align-items:flex-start; transition:opacity .25s ease, transform .25s ease;
+  }
+  .alert-card.high{background:#FDEEEC; border:1px solid #F6C9C2;}
+  .alert-card.med{background:#FFF6E6; border:1px solid #FBE2AE;}
+  .alert-card .ic{font-size:18px; flex-shrink:0;}
+  .alert-card .body2{flex:1;}
+  .alert-card .t1{font-weight:700; font-size:13px; margin-bottom:2px;}
+  .alert-card .t2{font-size:11.5px; color:var(--muted); line-height:1.4;}
+  .alert-card .sev{
+    font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.04em;
+    text-transform:uppercase; padding:3px 7px; border-radius:100px; margin-top:6px; display:inline-block;
+  }
+  .alert-card.high .sev{background:#F6C9C2; color:#8A2419;}
+  .alert-card.med .sev{background:#FBE2AE; color:#8A5A11;}
+  .btn-review{
+    margin-top:8px; font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700;
+    background:#fff; border:1px solid rgba(0,0,0,0.12); border-radius:100px; padding:6px 12px; cursor:pointer;
+  }
+  .btn-review:active{transform:scale(.96);}
+
+  .locked-banner{
+    background:#EEF2FF; border:1px solid #DCE3FA; border-radius:12px; padding:12px 13px;
+    font-size:11.5px; color:#3B4B7A; line-height:1.5; margin-bottom:12px; display:flex; gap:9px;
+  }
+  .btn-locked{
+    width:100%; padding:13px; border-radius:12px; border:1.5px dashed #C4CAD4;
+    background:#F4F5F7; color:var(--muted); font-weight:700; font-size:12.5px;
+    text-align:center; font-family:'JetBrains Mono',monospace; cursor:pointer;
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-5px);}
+    40%{transform:translateX(5px);}
+    60%{transform:translateX(-5px);}
+    80%{transform:translateX(5px);}
+  }
+  .shake{animation:shake .4s ease;}
+
+  ::-webkit-scrollbar{width:0px;}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="intro">
+    <div class="eyebrow">Lab 7 — High Fidelity Prototype</div>
+    <h1>Fire<span>Track</span></h1>
+    <p>A GovTech platform for BFP-CAR firefighter recruitment — replacing manual, favoritism-prone paperwork with a transparent, auto-tracked, merit-based process (SDG 16.5). Fully interactive: submit a score on the HR side and watch the applicant's status and the public ranking update live.</p>
+    <div class="tags">
+      <span class="tag">12 screens</span>
+      <span class="tag">2 roles</span>
+      <span class="tag">Live data sync</span>
+    </div>
+    <div class="role-switch">
+      <div class="role-btn on" id="rolebtn-applicant" onclick="switchRole('applicant')">Applicant App</div>
+      <div class="role-btn" id="rolebtn-hr" onclick="switchRole('hr')">HR Admin Panel</div>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen-wrap">
+
+      <!-- SCREEN 1: LOGIN -->
+      <div class="screen active" id="screen-login">
+        <div class="scrollarea">
+        <div class="login-screen">
+          <div class="login-top">
+            <div class="login-mark">🔥</div>
+            <h1>FireTrack</h1>
+            <p>BFP-CAR Recruitment Portal<br>Baguio City Regional Office</p>
+          </div>
+          <div class="field">
+            <label>Applicant ID</label>
+            <input type="text" id="loginId" placeholder="e.g. FT-2026-00125" value="FT-2026-00125">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" placeholder="••••••••" value="••••••••">
+            <div class="err" id="loginErr">Enter your Applicant ID to continue.</div>
+          </div>
+          <button class="btn-primary" onclick="attemptLogin()">Log In →</button>
+          <div class="applicant-id">SECURED · ENCRYPTED · MERIT-BASED ACCESS</div>
+          <div class="login-foot">New applicant? <a href="#">Create an account</a></div>
+        </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: DASHBOARD -->
+      <div class="screen" id="screen-dashboard">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header">
+          <div class="brand-row">
+            <div class="brand"><div class="brand-mark">🔥</div><div class="brand-name">FireTrack</div></div>
+            <div class="bell" id="bellApplicant" onclick="openNotifications()">🔔<div class="dot" id="dotApplicant"></div></div>
+          </div>
+          <div class="hi">WELCOME BACK<b>Alvin R. Domingo · <span id="dashboardId">FT-2026-00125</span></b></div>
+        </div>
+        <div class="content">
+          <h2 class="section-title">Recruitment Progress</h2>
+          <div class="tracker">
+            <div class="tracker-head"><span class="label">FO1 Application Cycle</span><span class="pct" id="trackerPct">62% complete</span></div>
+            <div class="gauge">
+              <div class="seg done"><div class="bar"></div><div class="stepname">Screening</div></div>
+              <div class="seg done"><div class="bar"></div><div class="stepname">PAT</div></div>
+              <div class="seg current" id="seg-neuro"><div class="bar"></div><div class="stepname">Neuro-<br>Psych</div></div>
+              <div class="seg todo" id="seg-medical"><div class="bar"></div><div class="stepname">Medical</div></div>
+              <div class="seg todo" id="seg-final"><div class="bar"></div><div class="stepname">Final<br>Ranking</div></div>
+            </div>
+            <div class="next-card" id="nextCard">
+              <div class="ic">🧠</div>
+              <div class="txt" id="nextCardTxt"><b>Next: Neuro-Psychiatric Exam</b>Scheduled Jul 14, 2026 · BFP-CAR HQ, Irisan</div>
+            </div>
+          </div>
+
+          <h2 class="section-title">Phase Results</h2>
+          <div class="card" onclick="go('detail')">
+            <div class="icon-box green">✓</div>
+            <div class="body"><div class="t1">Physical Ability Test</div><div class="t2">Completed Jun 20, 2026</div></div>
+            <div class="badge pass">Passed</div>
+          </div>
+          <div class="card" id="phaseCardNeuro" style="opacity:.6; cursor:default;">
+            <div class="icon-box orange">◐</div>
+            <div class="body"><div class="t1">Neuro-Psychiatric Exam</div><div class="t2">In progress</div></div>
+            <div class="badge pending">Pending</div>
+          </div>
+          <div class="card" id="phaseCardMedical" style="opacity:.5; cursor:default;">
+            <div class="icon-box grey">🔒</div>
+            <div class="body"><div class="t1">Medical Examination</div><div class="t2">Locked</div></div>
+            <div class="badge locked">Locked</div>
+          </div>
+
+          <h2 class="section-title" style="margin-top:18px">Quick Access</h2>
+          <div class="card" onclick="go('documents')">
+            <div class="icon-box orange">📄</div>
+            <div class="body"><div class="t1">Document Checklist</div><div class="t2" id="docsSummary">2 of 6 items pending</div></div>
+            <span class="chev">›</span>
+          </div>
+          <div class="card" onclick="go('leaderboard')">
+            <div class="icon-box grey">🏆</div>
+            <div class="body"><div class="t1">Public Ranking</div><div class="t2">View anonymized leaderboard</div></div>
+            <span class="chev">›</span>
+          </div>
+        </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navbtn" data-screen="dashboard" onclick="go('dashboard')"><span class="navic">🏠</span>Home</div>
+          <div class="navbtn" data-screen="documents" onclick="go('documents')"><span class="navic">📄</span>Docs</div>
+          <div class="navbtn" data-screen="leaderboard" onclick="go('leaderboard')"><span class="navic">🏆</span>Ranking</div>
+          <div class="navbtn" data-screen="notifications" onclick="openNotifications()"><span class="navic">🔔</span>Alerts</div>
+        </div>
+      </div>
+
+      <!-- SCREEN 3: PHASE DETAIL -->
+      <div class="screen" id="screen-detail">
+        <div class="scrollarea">
+        <div class="statusbar" style="color:#fff"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="detail-header">
+          <div class="backbtn" onclick="go('dashboard')">←</div>
+          <div class="score-ring"><div class="num">87<sub>/100</sub></div></div>
+          <div class="caption">PHYSICAL ABILITY TEST · PASSED</div>
+        </div>
+        <div class="content">
+          <h2 class="section-title">Score Breakdown</h2>
+          <div class="card" style="display:block; cursor:default;">
+            <div class="metric-row"><span class="k">Push-ups (1 min)</span><span class="v ok">42 reps</span></div>
+            <div class="metric-row"><span class="k">Sit-ups (1 min)</span><span class="v ok">45 reps</span></div>
+            <div class="metric-row"><span class="k">3.2km Run</span><span class="v ok">13:42 min</span></div>
+            <div class="metric-row"><span class="k">Rope Climb</span><span class="v ok">Passed</span></div>
+            <div class="metric-row"><span class="k">Panel Evaluator</span><span class="v">System-Assigned</span></div>
+          </div>
+          <div class="lb-note">This score was generated and verified automatically — no manual override was applied at any stage.</div>
+          <h2 class="section-title">Evaluation Log</h2>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box green">🔒</div>
+            <div class="body"><div class="t1">Immutable Record</div><div class="t2">Logged Jun 20, 2026 · 2:41 PM · Hash verified</div></div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 4: DOCUMENTS -->
+      <div class="screen" id="screen-documents">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header" style="padding-bottom:16px;">
+          <div class="brand-row">
+            <div class="brand"><div class="backbtn" style="margin:0" onclick="go('dashboard')">←</div><div class="brand-name" style="margin-left:6px">Documents</div></div>
+            <div></div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="doc-progress"><div class="track"><div class="fill" id="docFill" style="width:66%"></div></div><div class="txt" id="docProgressTxt">4 / 6 uploaded</div></div>
+
+          <div class="card" style="cursor:default;">
+            <div class="icon-box green">✓</div>
+            <div class="body"><div class="t1">NBI Clearance</div><div class="t2">Uploaded Jun 2, 2026</div></div>
+            <div class="badge pass">Verified</div>
+          </div>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box green">✓</div>
+            <div class="body"><div class="t1">Birth Certificate (PSA)</div><div class="t2">Uploaded Jun 2, 2026</div></div>
+            <div class="badge pass">Verified</div>
+          </div>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box green">✓</div>
+            <div class="body"><div class="t1">College Diploma</div><div class="t2">Uploaded Jun 3, 2026</div></div>
+            <div class="badge pass">Verified</div>
+          </div>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box green">✓</div>
+            <div class="body"><div class="t1">Certificate of Good Moral</div><div class="t2">Uploaded Jun 3, 2026</div></div>
+            <div class="badge pass">Verified</div>
+          </div>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box orange">◐</div>
+            <div class="body"><div class="t1">Medical Certificate</div><div class="t2">Awaiting BFP-CAR clinic upload</div></div>
+            <div class="badge pending">Pending</div>
+          </div>
+          <div class="card" id="docMissingCard" style="cursor:default;">
+            <div class="icon-box grey">!</div>
+            <div class="body"><div class="t1">Certificate of Residency</div><div class="t2">Required — not yet submitted</div></div>
+            <div class="badge missing">Missing</div>
+          </div>
+          <button class="btn-primary" id="uploadBtn" style="margin-top:6px;" onclick="uploadDocument()">Upload Missing Document</button>
+        </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 5: NOTIFICATIONS -->
+      <div class="screen" id="screen-notifications">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header" style="padding-bottom:16px;">
+          <div class="brand-row">
+            <div class="brand"><div class="backbtn" style="margin:0" onclick="go('dashboard')">←</div><div class="brand-name" style="margin-left:6px">Notifications</div></div>
+            <div></div>
+          </div>
+        </div>
+        <div class="content">
+          <h2 class="section-title">Today</h2>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box orange">🧠</div>
+            <div class="body"><div class="t1">Neuro-Psych Exam Scheduled</div><div class="t2">Jul 14, 2026 · 8:00 AM · BFP-CAR HQ</div></div>
+          </div>
+          <h2 class="section-title" style="margin-top:16px">This Week</h2>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box green">✓</div>
+            <div class="body"><div class="t1">PAT Results Released</div><div class="t2">You scored 87/100 — Passed</div></div>
+          </div>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box grey">📄</div>
+            <div class="body"><div class="t1">Document Reminder</div><div class="t2">Certificate of Residency still missing</div></div>
+          </div>
+          <h2 class="section-title" style="margin-top:16px">Earlier</h2>
+          <div class="card" style="cursor:default;">
+            <div class="icon-box grey">📥</div>
+            <div class="body"><div class="t1">Application Received</div><div class="t2">Your FO1 application was confirmed</div></div>
+          </div>
+        </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navbtn" data-screen="dashboard" onclick="go('dashboard')"><span class="navic">🏠</span>Home</div>
+          <div class="navbtn" data-screen="documents" onclick="go('documents')"><span class="navic">📄</span>Docs</div>
+          <div class="navbtn" data-screen="leaderboard" onclick="go('leaderboard')"><span class="navic">🏆</span>Ranking</div>
+          <div class="navbtn active" data-screen="notifications" onclick="openNotifications()"><span class="navic">🔔</span>Alerts</div>
+        </div>
+      </div>
+
+      <!-- SCREEN 6: LEADERBOARD -->
+      <div class="screen" id="screen-leaderboard">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header" style="padding-bottom:16px;">
+          <div class="brand-row">
+            <div class="brand"><div class="backbtn" style="margin:0" onclick="go('dashboard')">←</div><div class="brand-name" style="margin-left:6px">Public Ranking</div></div>
+            <div></div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="lb-note">Rankings are generated automatically from verified scores. Applicant names are hidden — only anonymized IDs are shown, eliminating the influence of backers. Not yet scored on every phase? You won't appear until your results are in.</div>
+          <div id="leaderboard-list"></div>
+        </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navbtn" data-screen="dashboard" onclick="go('dashboard')"><span class="navic">🏠</span>Home</div>
+          <div class="navbtn" data-screen="documents" onclick="go('documents')"><span class="navic">📄</span>Docs</div>
+          <div class="navbtn active" data-screen="leaderboard" onclick="go('leaderboard')"><span class="navic">🏆</span>Ranking</div>
+          <div class="navbtn" data-screen="notifications" onclick="openNotifications()"><span class="navic">🔔</span>Alerts</div>
+        </div>
+      </div>
+
+      <!-- SCREEN 7: HR LOGIN -->
+      <div class="screen" id="screen-hrlogin">
+        <div class="scrollarea">
+        <div class="login-screen">
+          <div class="login-top">
+            <div class="login-mark" style="background:linear-gradient(135deg,#3B5BA0,#20335E);">🛡️</div>
+            <h1>FireTrack</h1>
+            <p>HR &amp; Evaluator Admin Panel<br>BFP-CAR Regional Headquarters</p>
+          </div>
+          <div class="field">
+            <label>Staff ID</label>
+            <input type="text" placeholder="e.g. HR-CAR-014" value="HR-CAR-014">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" placeholder="••••••••" value="••••••••">
+          </div>
+          <button class="btn-primary" onclick="go('hrdash')">Log In →</button>
+          <div class="applicant-id">ROLE-BASED ACCESS · SESSION AUDITED</div>
+        </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 8: HR DASHBOARD -->
+      <div class="screen" id="screen-hrdash">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header">
+          <div class="brand-row">
+            <div class="brand"><div class="brand-mark">🛡️</div><div class="brand-name">HR Panel</div></div>
+            <div class="bell" id="bellHR" onclick="go('fraud')">🚨<div class="dot" id="dotHR"></div></div>
+          </div>
+          <div class="hi">EVALUATOR<b>FSupt. D. Cariño</b></div>
+        </div>
+        <div class="content">
+          <div class="stat-grid">
+            <div class="stat-box"><div class="num">142</div><div class="lbl">Active applicants</div></div>
+            <div class="stat-box"><div class="num" id="statAwaiting">3</div><div class="lbl">Awaiting scoring</div></div>
+            <div class="stat-box alert" id="statAlertsBox"><div class="num" id="statAlerts">3</div><div class="lbl">Fraud alerts open</div></div>
+          </div>
+
+          <h2 class="section-title">Evaluator Tools</h2>
+          <div class="card" onclick="go('hrqueue')">
+            <div class="icon-box orange">📋</div>
+            <div class="body"><div class="t1">Applicant Queue</div><div class="t2">Score by ID — names hidden</div></div>
+            <span class="chev">›</span>
+          </div>
+          <div class="card" onclick="go('auditlog')">
+            <div class="icon-box grey">🧾</div>
+            <div class="body"><div class="t1">Audit Log</div><div class="t2">Every action, timestamped</div></div>
+            <span class="chev">›</span>
+          </div>
+          <div class="card" onclick="go('fraud')">
+            <div class="icon-box orange">🚨</div>
+            <div class="body"><div class="t1">Fraud Detection Alerts</div><div class="t2">Flagged suspicious activity</div></div>
+            <span class="chev">›</span>
+          </div>
+          <div class="card" onclick="go('hrranking')">
+            <div class="icon-box green">🏆</div>
+            <div class="body"><div class="t1">Final Ranking</div><div class="t2">Auto-generated · locked from edits</div></div>
+            <span class="chev">›</span>
+          </div>
+        </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navbtn" data-screen="hrdash" onclick="go('hrdash')"><span class="navic">🏠</span>Home</div>
+          <div class="navbtn" data-screen="hrqueue" onclick="go('hrqueue')"><span class="navic">📋</span>Queue</div>
+          <div class="navbtn" data-screen="auditlog" onclick="go('auditlog')"><span class="navic">🧾</span>Logs</div>
+          <div class="navbtn" data-screen="fraud" onclick="go('fraud')"><span class="navic">🚨</span>Alerts</div>
+        </div>
+      </div>
+
+      <!-- SCREEN 9: HR APPLICANT QUEUE / SCORE ENTRY -->
+      <div class="screen" id="screen-hrqueue">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header" style="padding-bottom:16px;">
+          <div class="brand-row">
+            <div class="brand"><div class="backbtn" style="margin:0" onclick="go('hrdash')">←</div><div class="brand-name" style="margin-left:6px">Score Entry</div></div>
+            <div></div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="anon-note"><span class="ic">🙈</span><span>Applicant identity is hidden during scoring. You see the Applicant ID only — names are revealed automatically after Final Ranking is generated.</span></div>
+
+          <div id="scoreCardWrap">
+            <div class="card" style="cursor:default; display:block;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span class="id-pill" id="scoreCardId">FT-2026-00125</span>
+                <span class="badge pending" id="scoreCardPhase">Neuro-Psych</span>
+              </div>
+              <div class="score-input-row"><label id="scoreLabel1">Cognitive Assessment</label><input type="text" id="scoreInput1" value="88"></div>
+              <div class="score-input-row"><label id="scoreLabel2">Stress Response Test</label><input type="text" id="scoreInput2" value="84"></div>
+              <div class="score-input-row"><label id="scoreLabel3">Panel Interview</label><input type="text" id="scoreInput3" value="90"></div>
+              <button class="btn-primary" id="submitScoreBtn" style="margin-top:4px;" onclick="submitScore()">Submit Score →</button>
+            </div>
+          </div>
+
+          <h2 class="section-title" style="margin-top:16px;">Queue</h2>
+          <div id="queueList"></div>
+        </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navbtn" data-screen="hrdash" onclick="go('hrdash')"><span class="navic">🏠</span>Home</div>
+          <div class="navbtn active" data-screen="hrqueue" onclick="go('hrqueue')"><span class="navic">📋</span>Queue</div>
+          <div class="navbtn" data-screen="auditlog" onclick="go('auditlog')"><span class="navic">🧾</span>Logs</div>
+          <div class="navbtn" data-screen="fraud" onclick="go('fraud')"><span class="navic">🚨</span>Alerts</div>
+        </div>
+      </div>
+
+      <!-- SCREEN 10: AUDIT LOG -->
+      <div class="screen" id="screen-auditlog">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header" style="padding-bottom:16px;">
+          <div class="brand-row">
+            <div class="brand"><div class="backbtn" style="margin:0" onclick="go('hrdash')">←</div><div class="brand-name" style="margin-left:6px">Audit Log</div></div>
+            <div></div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="locked-banner">🔒 Logs are system-generated and cannot be edited or deleted by any user.</div>
+          <table class="log-table">
+            <thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead>
+            <tbody id="auditRows">
+              <tr><td class="time">9:15 AM</td><td>HR Officer</td><td class="action">Approved Medical Certificate<br><span class="id-pill">FT-2026-00019</span></td></tr>
+              <tr><td class="time">10:47 AM</td><td>Applicant</td><td class="action">Logged in to portal<br><span class="id-pill">FT-2026-00211</span></td></tr>
+              <tr><td class="time">11:12 AM</td><td>System</td><td class="action">Flagged duplicate record<br><span class="id-pill">FT-2026-00058</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navbtn" data-screen="hrdash" onclick="go('hrdash')"><span class="navic">🏠</span>Home</div>
+          <div class="navbtn" data-screen="hrqueue" onclick="go('hrqueue')"><span class="navic">📋</span>Queue</div>
+          <div class="navbtn active" data-screen="auditlog" onclick="go('auditlog')"><span class="navic">🧾</span>Logs</div>
+          <div class="navbtn" data-screen="fraud" onclick="go('fraud')"><span class="navic">🚨</span>Alerts</div>
+        </div>
+      </div>
+
+      <!-- SCREEN 11: FRAUD ALERTS -->
+      <div class="screen" id="screen-fraud">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header" style="padding-bottom:16px;">
+          <div class="brand-row">
+            <div class="brand"><div class="backbtn" style="margin:0" onclick="go('hrdash')">←</div><div class="brand-name" style="margin-left:6px">Fraud Alerts</div></div>
+            <div></div>
+          </div>
+        </div>
+        <div class="content" id="fraudContent">
+          <div class="alert-card high" id="alert1">
+            <div class="ic">⚠️</div>
+            <div class="body2"><div class="t1">Score Changed After Submission</div><div class="t2">FT-2026-00058 — PAT score edited 2 hrs after lock. Flagged for review.</div><span class="sev">High</span><br><button class="btn-review" onclick="markAlertReviewed('alert1')">Mark Reviewed</button></div>
+          </div>
+          <div class="alert-card high" id="alert2">
+            <div class="ic">🚫</div>
+            <div class="body2"><div class="t1">Duplicate Applicant Record</div><div class="t2">FT-2026-00058 shares biometric match with FT-2026-00019.</div><span class="sev">High</span><br><button class="btn-review" onclick="markAlertReviewed('alert2')">Mark Reviewed</button></div>
+          </div>
+          <div class="alert-card med" id="alert3">
+            <div class="ic">🔑</div>
+            <div class="body2"><div class="t1">Multiple Failed Login Attempts</div><div class="t2">5 failed attempts on Staff ID HR-CAR-022 within 10 minutes.</div><span class="sev">Medium</span><br><button class="btn-review" onclick="markAlertReviewed('alert3')">Mark Reviewed</button></div>
+          </div>
+          <div class="empty-state" id="fraudEmpty" style="display:none;"><span class="ic">✅</span>All flagged events have been reviewed.</div>
+        </div>
+        </div>
+        <div class="bottomnav">
+          <div class="navbtn" data-screen="hrdash" onclick="go('hrdash')"><span class="navic">🏠</span>Home</div>
+          <div class="navbtn" data-screen="hrqueue" onclick="go('hrqueue')"><span class="navic">📋</span>Queue</div>
+          <div class="navbtn" data-screen="auditlog" onclick="go('auditlog')"><span class="navic">🧾</span>Logs</div>
+          <div class="navbtn active" data-screen="fraud" onclick="go('fraud')"><span class="navic">🚨</span>Alerts</div>
+        </div>
+      </div>
+
+      <!-- SCREEN 12: HR FINAL RANKING (locked / auto) -->
+      <div class="screen" id="screen-hrranking">
+        <div class="scrollarea">
+        <div class="statusbar"><span>9:41</span><span>●●● 5G 100%</span></div>
+        <div class="app-header" style="padding-bottom:16px;">
+          <div class="brand-row">
+            <div class="brand"><div class="backbtn" style="margin:0" onclick="go('hrdash')">←</div><div class="brand-name" style="margin-left:6px">Final Ranking</div></div>
+            <div></div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="locked-banner">🔒 Rankings are calculated automatically from submitted scores. Manual reordering is disabled for all roles, including Admin.</div>
+          <div id="hrranking-list"></div>
+          <button class="btn-locked" id="lockedBtn" style="margin-top:14px;" onclick="lockedClick(this)">⛔ Manual Reorder Disabled</button>
+        </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const meId = 'FT-2026-00125';
+
+  let rankingData = [
+    {id:'FT-2026-00092', score:96.4},
+    {id:'FT-2026-00211', score:94.8},
+    {id:'FT-2026-00037', score:93.1},
+    {id:'FT-2026-00084', score:90.3},
+    {id:'FT-2026-00263', score:88.9},
+    {id:'FT-2026-00119', score:87.2}
+  ];
+
+  let queue = [
+    {id:'FT-2026-00125', phase:'Neuro-Psych', labels:['Cognitive Assessment','Stress Response Test','Panel Interview'], scores:[88,84,90]},
+    {id:'FT-2026-00058', phase:'PAT', labels:['Push-up Test (reps)','Sit-up Test (reps)','3.2km Run (score)'], scores:[80,78,82]},
+    {id:'FT-2026-00019', phase:'Medical', labels:['Vital Signs','Lab Results','Physical Exam'], scores:[85,88,82]}
+  ];
+
+  let alertCount = 3;
+
+  /* ---------- NAVIGATION ---------- */
+  function go(name){
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const activeScreen = document.getElementById('screen-' + name);
+    activeScreen.classList.add('active');
+    const nav = activeScreen.querySelector('.bottomnav');
+    if(nav){
+      nav.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
+      const btn = nav.querySelector('[data-screen="' + name + '"]');
+      if(btn) btn.classList.add('active');
+    }
+  }
+
+  function switchRole(role){
+    document.getElementById('rolebtn-applicant').classList.toggle('on', role === 'applicant');
+    document.getElementById('rolebtn-hr').classList.toggle('on', role === 'hr');
+    go(role === 'applicant' ? 'login' : 'hrlogin');
+  }
+
+  function attemptLogin(){
+    const val = document.getElementById('loginId').value.trim();
+    const err = document.getElementById('loginErr');
+    if(val === ''){
+      err.style.display = 'block';
+      return;
+    }
+    err.style.display = 'none';
+    document.getElementById('dashboardId').textContent = val;
+    go('dashboard');
+  }
+
+  function openNotifications(){
+    go('notifications');
+    const dot = document.getElementById('dotApplicant');
+    if(dot) dot.style.display = 'none';
+  }
+
+  /* ---------- RANKING (shared between Applicant Leaderboard & HR Final Ranking) ---------- */
+  function renderRanking(){
+    const sorted = [...rankingData].sort((a,b) => b.score - a.score);
+    const html = sorted.map((r,i) => {
+      const rank = i + 1;
+      let cls = '';
+      if(rank === 1) cls = 'top1'; else if(rank === 2) cls = 'top2'; else if(rank === 3) cls = 'top3';
+      if(r.id === meId) cls += ' me';
+      const label = r.id === meId ? r.id + ' (You)' : r.id;
+      return '<div class="lb-row ' + cls + '"><div class="lb-rank">' + rank + '</div><div class="lb-id">' + label + '</div><div class="lb-score">' + r.score.toFixed(1) + '</div></div>';
+    }).join('');
+    document.getElementById('leaderboard-list').innerHTML = html;
+    document.getElementById('hrranking-list').innerHTML = html;
+  }
+
+  /* ---------- AUDIT LOG ---------- */
+  function addAuditLog(user, actionHtml){
+    const tbody = document.getElementById('auditRows');
+    const tr = document.createElement('tr');
+    tr.className = 'new-row';
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    tr.innerHTML = '<td class="time">' + timeStr + '</td><td>' + user + '</td><td class="action">' + actionHtml + '</td>';
+    tbody.insertBefore(tr, tbody.firstChild);
+  }
+
+  /* ---------- HR SCORE ENTRY / QUEUE ---------- */
+  function loadScoreCard(){
+    const wrap = document.getElementById('scoreCardWrap');
+    if(queue.length === 0){
+      wrap.innerHTML = '<div class="empty-state"><span class="ic">🎉</span>No applicants awaiting scoring right now.</div>';
+      return;
+    }
+    const a = queue[0];
+    document.getElementById('scoreCardId').textContent = a.id;
+    document.getElementById('scoreCardPhase').textContent = a.phase;
+    document.getElementById('scoreLabel1').textContent = a.labels[0];
+    document.getElementById('scoreLabel2').textContent = a.labels[1];
+    document.getElementById('scoreLabel3').textContent = a.labels[2];
+    document.getElementById('scoreInput1').value = a.scores[0];
+    document.getElementById('scoreInput2').value = a.scores[1];
+    document.getElementById('scoreInput3').value = a.scores[2];
+  }
+
+  function renderQueueList(){
+    const upcoming = queue.slice(1);
+    const list = document.getElementById('queueList');
+    if(upcoming.length === 0){
+      list.innerHTML = '<div class="empty-state"><span class="ic">📭</span>No other applicants waiting.</div>';
+      return;
+    }
+    list.innerHTML = upcoming.map(a =>
+      '<div class="card" style="cursor:default;"><div class="icon-box grey">⏳</div><div class="body"><div class="t1"><span class="id-pill">' + a.id + '</span></div><div class="t2">Awaiting ' + a.phase + ' score</div></div></div>'
+    ).join('');
+  }
+
+  function submitScore(){
+    if(queue.length === 0) return;
+    const applicant = queue.shift();
+    const vals = [1,2,3].map(n => parseFloat(document.getElementById('scoreInput' + n).value) || 0);
+    const avg = Math.round((vals.reduce((a,b) => a+b, 0) / vals.length) * 10) / 10;
+
+    const existing = rankingData.find(r => r.id === applicant.id);
+    if(existing){ existing.score = avg; } else { rankingData.push({id: applicant.id, score: avg}); }
+    renderRanking();
+
+    addAuditLog('Evaluator', 'Submitted ' + applicant.phase + ' score for <span class="id-pill">' + applicant.id + '</span> — ' + avg + '/100');
+
+    const statEl = document.getElementById('statAwaiting');
+    statEl.textContent = Math.max(0, parseInt(statEl.textContent) - 1);
+
+    if(applicant.id === meId){
+      syncApplicantProgress();
+    }
+
+    renderQueueList();
+    loadScoreCard();
+  }
+
+  function syncApplicantProgress(){
+    document.getElementById('trackerPct').textContent = '78% complete';
+
+    const segNeuro = document.getElementById('seg-neuro');
+    segNeuro.classList.remove('current'); segNeuro.classList.add('done');
+
+    const segMedical = document.getElementById('seg-medical');
+    segMedical.classList.remove('todo'); segMedical.classList.add('current');
+
+    document.getElementById('nextCardTxt').innerHTML = '<b>Next: Medical Examination</b>Scheduled shortly · BFP-CAR Regional Clinic';
+
+    const cardNeuro = document.getElementById('phaseCardNeuro');
+    cardNeuro.style.opacity = 1;
+    cardNeuro.querySelector('.icon-box').className = 'icon-box green';
+    cardNeuro.querySelector('.icon-box').textContent = '✓';
+    cardNeuro.querySelector('.t2').textContent = 'Completed just now';
+    const badgeNeuro = cardNeuro.querySelector('.badge');
+    badgeNeuro.className = 'badge pass';
+    badgeNeuro.textContent = 'Passed';
+
+    const cardMedical = document.getElementById('phaseCardMedical');
+    cardMedical.style.opacity = 1;
+    cardMedical.querySelector('.icon-box').className = 'icon-box orange';
+    cardMedical.querySelector('.icon-box').textContent = '◐';
+    cardMedical.querySelector('.t2').textContent = 'Scheduled soon';
+    const badgeMedical = cardMedical.querySelector('.badge');
+    badgeMedical.className = 'badge pending';
+    badgeMedical.textContent = 'Pending';
+  }
+
+  /* ---------- DOCUMENT UPLOAD ---------- */
+  function uploadDocument(){
+    const card = document.getElementById('docMissingCard');
+    card.querySelector('.icon-box').className = 'icon-box orange';
+    card.querySelector('.icon-box').textContent = '◐';
+    card.querySelector('.t2').textContent = 'Submitted — awaiting verification';
+    const badge = card.querySelector('.badge');
+    badge.className = 'badge pending';
+    badge.textContent = 'Pending';
+
+    document.getElementById('docFill').style.width = '83%';
+    document.getElementById('docProgressTxt').textContent = '5 / 6 uploaded';
+    document.getElementById('docsSummary').textContent = '1 of 6 items pending';
+
+    const btn = document.getElementById('uploadBtn');
+    btn.textContent = 'Document Submitted ✓';
+    btn.className = 'btn-locked';
+    btn.onclick = null;
+    btn.style.cursor = 'default';
+
+    addAuditLog('Applicant', 'Uploaded Certificate of Residency<br><span class="id-pill">' + meId + '</span>');
+  }
+
+  /* ---------- FRAUD ALERTS ---------- */
+  function markAlertReviewed(cardId){
+    const card = document.getElementById(cardId);
+    card.style.opacity = 0;
+    card.style.transform = 'translateX(20px)';
+    setTimeout(() => {
+      card.remove();
+      alertCount = Math.max(0, alertCount - 1);
+      document.getElementById('statAlerts').textContent = alertCount;
+      if(alertCount === 0){
+        document.getElementById('statAlertsBox').classList.remove('alert');
+        const dot = document.getElementById('dotHR');
+        if(dot) dot.style.display = 'none';
+        document.getElementById('fraudEmpty').style.display = 'block';
+      }
+    }, 250);
+    addAuditLog('Admin', 'Reviewed and cleared a fraud alert');
+  }
+
+  /* ---------- LOCKED RANKING BUTTON ---------- */
+  function lockedClick(el){
+    el.classList.add('shake');
+    const original = el.textContent;
+    el.textContent = '🔒 Action Blocked — Logged for Audit';
+    addAuditLog('System', 'Blocked manual ranking reorder attempt by Admin');
+    setTimeout(() => {
+      el.textContent = original;
+      el.classList.remove('shake');
+    }, 1800);
+  }
+
+  /* ---------- INIT ---------- */
+  renderRanking();
+  renderQueueList();
+</script>
+</body>
+</html>
